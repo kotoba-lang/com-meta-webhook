@@ -62,3 +62,21 @@ consumer needs that later — not built now, YAGNI).
   Review (required for Messenger's `pages_messaging` permission and
   WhatsApp's message-template/production-access approval), and token
   issuance are all owner-side, out-of-band actions.
+
+## Addendum (2026-07-16): Instagram Messaging
+
+A third consumer appeared (owner asked to fill remaining messenger-app gaps
+after X/WhatsApp/Messenger; Instagram Messaging is the same Meta Graph API
+family this library already exists to share). `meta-webhook.signature`/
+`async-signature`/`handshake` need zero changes — verified identical scheme
+across all three Meta products. Added `instagram-events` (separate
+namespace from `messenger-events` despite an identical payload shape today,
+since Instagram's webhook also carries story-mention/story-reply events
+Messenger doesn't — keeping them separate avoids an awkward retrofit if
+this ns grows to normalize those) and `instagram-client` (send-side;
+Instagram's send endpoint is scoped to the connected IG Business/Creator
+account id, `/{ig-user-id}/messages`, unlike Messenger's fixed `/me/messages`
+— different enough to not share `messenger-client` directly, same DI
+contract). Requires its own App Review (`instagram_manage_messages`
+permission) and its own verify-token/app-secret pair, same posture as
+WhatsApp/Messenger above.

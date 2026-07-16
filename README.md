@@ -1,10 +1,10 @@
 # com-meta-webhook
 
 Shared webhook infrastructure for Meta Graph API messaging products
-(WhatsApp Business Cloud API, Messenger Platform — both use the identical
-`X-Hub-Signature-256` verification scheme and setup handshake, so this
-library covers both rather than duplicating the crypto/handshake code
-per-product).
+(WhatsApp Business Cloud API, Messenger Platform, Instagram Messaging — all
+three use the identical `X-Hub-Signature-256` verification scheme and setup
+handshake, so this library covers all of them rather than duplicating the
+crypto/handshake code per-product).
 
 ## Modules
 
@@ -15,6 +15,8 @@ meta-webhook.handshake          pure .cljc: the GET hub.mode/hub.verify_token/hu
 meta-webhook.whatsapp-events    pure .cljc: WhatsApp Business Cloud API webhook JSON -> normalized text-message events
 meta-webhook.messenger-events   pure .cljc: Messenger Platform webhook JSON -> normalized text-message events
 meta-webhook.messenger-client   portable .cljc, DI'd I/O: Messenger Send API (send-message!)
+meta-webhook.instagram-events   pure .cljc: Instagram Messaging webhook JSON -> normalized text-message events
+meta-webhook.instagram-client   portable .cljc, DI'd I/O: Instagram Messaging Send API (send-message!)
 ```
 
 WhatsApp's send-side is **not** duplicated here — `kotoba-lang/tayori`'s
@@ -50,17 +52,23 @@ only. Messenger has no existing send client anywhere in kotoba-lang, so
 (mc/send-message! {:http-fn my-http-fn :json-write my-json-write :json-read my-json-read
                     :creds {:page-access-token "..."}}
                    {:recipient-id user-id :text "hello"})
+
+;; Sending an Instagram DM reply
+(require '[meta-webhook.instagram-client :as ic])
+(ic/send-message! {:http-fn my-http-fn :json-write my-json-write :json-read my-json-read
+                    :creds {:ig-user-id "..." :access-token "..."}}
+                   {:recipient-id igsid :text "hello"})
 ```
 
 `app-secret` (webhook verification) and `page-access-token`/WhatsApp's
-`access-token` (send) are different values from different pages of the Meta
-App dashboard — do not conflate them. Neither is acquired by this library;
+`access-token`/Instagram's `ig-user-id`+`access-token` (send) are different
+values from different pages of the Meta App dashboard — do not conflate them. Neither is acquired by this library;
 callers resolve them from env/secrets.
 
 ## Testing
 
 ```bash
-clojure -M:test   # signature/handshake/whatsapp-events/messenger-events/messenger-client (JVM)
+clojure -M:test   # signature/handshake/whatsapp-events/messenger-events/messenger-client/instagram-* (JVM)
 clojure -M:lint
 ```
 
